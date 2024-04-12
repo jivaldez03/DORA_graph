@@ -12,12 +12,10 @@ search_by_article = """
         optional match (pt)-[]-(spt:Sub_Point)
         optional match (spt)-[]-(ft:Full_Text)
         return ar, p,pt,spt, ft
-        //RETURN ar.ID, p.par_ID, pt.point, spt.sub_point, ft.full_text //
-        //order by ar.ID, p.par_ID, pt.point, spt.sub_point
         """
 
 dora_properties_params = """
-        supported_on: $supported_on
+        category: $category
         , domain: $domain 
         , article_heading: article_heading
         , section_heading : $section_heading
@@ -33,6 +31,10 @@ dora_properties_params = """
         , full_text : $full_text
         """
 
+initializing_database = """
+        match (n)
+        detach delete n
+        """
 create_dora_record_file = """
         create (n:Record_File)
         set n += {{ {properties}, ctInsert: datetime() }} 
@@ -44,19 +46,15 @@ create_dora_record_file = """
 domain_cat_other = """
         // COLLECT VALUES FOR CENTRAL (CATALOG) NODES
         match (n:Record_File)
-        with collect(distinct n.supported_on) as lsupported_on, collect(distinct n.domain) as ldomain
+        with collect(distinct n.category) as lcategory, collect(distinct n.domain) as ldomain
                 , collect (distinct n.responsible) as lresp, collect (distinct n.stipulation) as lstip
-
         // CATEGORIES  vs Record_File
-        unwind lsupported_on as supported_on
-        merge (so:Category {name:supported_on})
+        unwind lcategory as category
+        merge (so:Category {name:category})
         with ldomain, lresp, lstip
         match (n:Record_File)
-        match (so:Category where so.name = n.supported_on)
+        match (so:Category where so.name = n.category)
         merge (so)-[:CATEGORY]->(n)
-
-        //return ldomain, lresp, lstip
-
         // domain  vs Record_File
         with distinct ldomain, lresp, lstip
         unwind ldomain as domain
@@ -65,7 +63,6 @@ domain_cat_other = """
         match (n:Record_File)
         match (dm:Domain) where dm.name = n.domain
         merge (dm)-[:DOMAIN]->(n)
-        //return distinct lresp 
         // responsible  vs Record_File
         with distinct lresp, lstip
         unwind lresp as responsible
@@ -74,7 +71,6 @@ domain_cat_other = """
         match (n:Record_File)
         match (re:Responsible) where re.name = n.responsible
         merge (re)-[:RESPONSIBLE]->(n)
-
         // lstipulation  vs Record_File
         with distinct lstip
         unwind lstip as stipulation
@@ -89,51 +85,40 @@ articles = """
         match (n:Record_File)
         with distinct n.article as article, n.article_heading as article_heading
         merge (ar:Article {name:article_heading, ID: article})
-
-        //return article, article_heading
-
         with ar
         match (n:Record_File)
         match (ar:Article) where ar.ID = n.article
         merge (ar)<-[:RECORD_FILE]-(n)
         with ar, n
-        //match (n:Record_File)<-[:ARTICLE]-(ar:Article)
-        //match (so:Category)-[:CATEGORY]->(n)
-        //merge (so)-[:CATEGORY]->(ar)
-
-        with n, ar
         match (dm:Domain)-[:DOMAIN]->(n)
         merge (dm)-[:DOMAIN]->(ar)        
         """
 
 paragraph = """
-        //paragraph
+        //article-paragraph
         match (ar:Article)<-[:RECORD_FILE]-(n:Record_File)<-[:CATEGORY]-(sp:Category)
         merge (p:Paragraph {art_ID:ar.ID, par_ID: toInteger(coalesce(n.paragraph,'0'))})
         merge (p)<-[:RECORD_FILE]-(n)
         merge (p)<-[:PARAGRAPH]-(ar)
-        //merge (p)<-[:CATEGORY]-(sp)
         """
 
 
 
 point = """
-        //paragraph
+        //paragraph-point
         match (p:Paragraph)<-[:RECORD_FILE]-(n:Record_File)<-[:CATEGORY]-(sp:Category)        
         merge (pt:Point {art_ID:p.art_ID, par_ID: p.par_ID, point: toString(coalesce(n.point,''))})
         merge (pt)<-[:RECORD_FILE]-(n)
         merge (pt)<-[:POINT]-(p)
-        //merge (pt)<-[:CATEGORY]-(sp)
         """
 
 
 sub_point = """
-        //paragraph
+        //point-subpoint
         match (p:Paragraph)-[:POINT]->(pt:Point)<-[:RECORD_FILE]-(n:Record_File)<-[:CATEGORY]-(sp:Category)        
         merge (spt:Sub_Point {art_ID:p.art_ID, par_ID: toInteger(p.par_ID), point: pt.point, sub_point: coalesce(toInteger(n.sub_point),'')})
         merge (spt)<-[:RECORD_FILE]-(n)
         merge (spt)<-[:SUB_POINT]-(pt)
-        //merge (spt)<-[:CATEGORY]-(sp)
         """
 
 fulltext = """
@@ -207,11 +192,20 @@ related_to_Point = """
         merge (pt)-[:RELATED_TO]->(ft)
         """
 
+false_par_fulltext = """
+        match (p:Paragraph)
+        set p.art_ID = null
+        with p
+        match (p)-[]->(pt:Point)
+        set pt.par_ID = null, pt.art_ID = null
+        with pt
+        match (pt)-[]->(spt:Sub_Point)
+        set spt.par_ID = null, spt.art_ID = null, spt.point = null
+        """
+
 false_pt_fulltext = """
         match (pt:Point)
         where pt.point = ""
-        //match (pt)-[r:FULL_TEXT]-(ft:Full_Text)
-        //where exists {(ft)-[:FULL_TEXT]-(n) where labels(n)}
         detach delete pt
         """
 
@@ -219,28 +213,26 @@ false_spt_fulltext = """
         match (spt:Sub_Point)
         where spt.sub_point = ""
         match (spt)-[r:FULL_TEXT]-(ft:Full_Text)
-        //where exists {(ft)-[:FULL_TEXT]-(n) where labels(n)}
         delete r
         detach delete spt
         """
 
 complete_extraction = """
-        call {
-        match (p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) //-[:STIPULATION]-(st:Stipulation)
-        return p.art_ID as art, p.par_ID as par, '' as point, '' as subpoint,  ft.full_text as ft
-        //order by p.art_ID, p.par_ID
+        match (art:Article)
+        call { with art
+        match (art)-[:PARAGRAPH]->(p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) //-[:STIPULATION]-(st:Stipulation)
+        return p.par_ID as par, '' as point, '' as subpoint,  ft.full_text as ft
         union all
-        match (p)-[:POINT]-(pt:Point)-[rf2:FULL_TEXT]->(ft:Full_Text)
+        match (art)-[:PARAGRAPH]->(p:Paragraphp)-[:POINT]-(pt:Point)-[rf2:FULL_TEXT]->(ft:Full_Text)
         where pt.point <> ""
-        return p.art_ID as art, p.par_ID as par, pt.point as point, '' as subpoint,  ft.full_text as ft
-        //order by p.art_ID, p.par_ID
+        return p.par_ID as par, pt.point as point, '' as subpoint,  ft.full_text as ft
         union all
-        match (p)-[:POINT]-(pt:Point)-[:SUB_POINT]-(spt:Sub_Point)-[:FULL_TEXT]->(ft:Full_Text)
+        match (art)-[:PARAGRAPH]->(p:Paragraph)-[:POINT]-(pt:Point)-[:SUB_POINT]-(spt:Sub_Point)-[:FULL_TEXT]->(ft:Full_Text)
         where spt.sub_point <> ""
-        return p.art_ID as art, p.par_ID as par, pt.point as point, spt.sub_point as subpoint,  ft.full_text as ft
+        return p.par_ID as par, pt.point as point, spt.sub_point as subpoint,  ft.full_text as ft
         }
-        return art, par, point, subpoint,  ft
-        order by art, par, point, subpoint
+        return art.ID as article, par, point, subpoint,  ft
+        order by article, par, point, subpoint
         """
 
 create_root =   """

@@ -1,6 +1,6 @@
 
 class record_class:
-    area: str
+    category: str
     domain: str
     article_heading: str
     section_heading : str

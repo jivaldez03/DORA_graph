@@ -20,8 +20,7 @@ def _df_renamecolumn(df, oldcolum='oldcolum',newcolumn='newcolumn'):
     return df
 
 
-def _df_renamecolumns(df, colreplacename:dict):  # { oldcolumnname1: newcolname1, oldcolumnname2: newcolname2}
-    print(colreplacename)
+def _df_renamecolumns(df, colreplacename:dict):  # { oldcolumnname1: newcolname1, oldcolumnname2: newcolname2}    
     df.rename(columns = colreplacename, inplace = True)     
     return df
 

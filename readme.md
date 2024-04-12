@@ -16,6 +16,7 @@
 sudo docker run -d --publish=7474:7474 --publish=7687:7687 --env=NEO4J_AUTH=none --volume=/home/jiduma/dockerback/dock_DORA/data:/data neo4j
 sudo docker run -d --publish=7474:7474 --publish=7687:7687 --env=NEO4J_AUTH=none --volume=/home/jiduma/dockerback/dock_DORA/data:/data neo4j
 
+<ignore
 sudo docker run -d --publish=7475:7474 --publish=7688:7687 --env=NEO4J_AUTH=none \
     -v $PWD/plugins:/plugins \
     --name neo4j-apoc \
@@ -37,8 +38,9 @@ docker run \
     -e NEO4JLABS_PLUGINS=\[\"apoc\"\] \
     neo4j:4.0
 
+>
 
-## Loading NIST file
+## Loading DORA's file
 ### To load file into docker execute: 
 2. python3 main.py
 
@@ -51,3 +53,25 @@ http://0.0.0.0:7474/browser/   or http://localhost:7474/browser/
 call db.schema.visualization()  
 
 ![schema visualization](schema_visualization.png)
+
+
+
+## Complete_extraction =
+
+        call {
+        match (p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) //-[:STIPULATION]-(st:Stipulation)
+        return p.art_ID as art, p.par_ID as par, '' as point, '' as subpoint,  ft.full_text as ft
+        //order by p.art_ID, p.par_ID
+        union all
+        match (p)-[:POINT]-(pt:Point)-[rf2:FULL_TEXT]->(ft:Full_Text)
+        where pt.point <> ""
+        return p.art_ID as art, p.par_ID as par, pt.point as point, '' as subpoint,  ft.full_text as ft
+        //order by p.art_ID, p.par_ID
+        union all
+        match (p)-[:POINT]-(pt:Point)-[:SUB_POINT]-(spt:Sub_Point)-[:FULL_TEXT]->(ft:Full_Text)
+        where spt.sub_point <> ""
+        return p.art_ID as art, p.par_ID as par, pt.point as point, spt.sub_point as subpoint,  ft.full_text as ft
+        }
+        return art, par, point, subpoint,  ft
+        order by art, par, point, subpoint
+        
