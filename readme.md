@@ -49,29 +49,39 @@ docker run \
 http://0.0.0.0:7474/browser/   or http://localhost:7474/browser/
 
 
-# Review complete schema - Neo4j Command: 
+## Review complete schema - Neo4j Command: 
 call db.schema.visualization()  
 
-![schema visualization](schema_visualization.png)
+![schema visualization](DORA_schema.png)
 
 
+## Gloabal View
 
-## Complete_extraction =
+![Global View](complete_graph.png)
 
-        call {
-        match (p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) //-[:STIPULATION]-(st:Stipulation)
-        return p.art_ID as art, p.par_ID as par, '' as point, '' as subpoint,  ft.full_text as ft
-        //order by p.art_ID, p.par_ID
+
+### getting_articles
+
+        MATCH (art:Article)        
+        call { WITH art
+        MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) //-[:STIPULATION]-(st:Stipulation)
+        RETURN p.par_ID as par, '' as point, '' as subpoint,  ft.full_text as ft
         union all
-        match (p)-[:POINT]-(pt:Point)-[rf2:FULL_TEXT]->(ft:Full_Text)
-        where pt.point <> ""
-        return p.art_ID as art, p.par_ID as par, pt.point as point, '' as subpoint,  ft.full_text as ft
-        //order by p.art_ID, p.par_ID
+        WITH art
+        MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[:POINT]->(pt:Point)-[rf2:FULL_TEXT]->(ft:Full_Text)
+        RETURN p.par_ID as par, pt.point as point, '' as subpoint,  ft.full_text as ft
         union all
-        match (p)-[:POINT]-(pt:Point)-[:SUB_POINT]-(spt:Sub_Point)-[:FULL_TEXT]->(ft:Full_Text)
-        where spt.sub_point <> ""
-        return p.art_ID as art, p.par_ID as par, pt.point as point, spt.sub_point as subpoint,  ft.full_text as ft
+        WITH art
+        MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[:POINT]->(pt:Point)-[:SUB_POINT]->(spt:Sub_Point)-[:FULL_TEXT]->(ft:Full_Text)
+        RETURN p.par_ID as par, pt.point as point, spt.sub_point as subpoint,  ft.full_text as ft
         }
-        return art, par, point, subpoint,  ft
-        order by art, par, point, subpoint
-        
+        RETURN art.ID as article, par, point, subpoint,  ft
+        order by article, par, point, subpoint
+
+### searching by article
+        MATCH (ar:Article {ID:28})
+        OPTIONAL MATCH (ar)-[]-(p:Paragraph)
+        OPTIONAL MATCH (p)-[]-(pt:Point)
+        OPTIONAL MATCH (pt)-[]-(spt:Sub_Point)
+        OPTIONAL MATCH (spt)-[]-(ft:Full_Text)
+        RETURN ar, p,pt,spt, ft

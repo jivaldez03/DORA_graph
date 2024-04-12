@@ -2,7 +2,7 @@ all_nodes = """
         MATCH (d:Domain)-[]-(ar:Article)-[]-(p:Paragraph)-[]-(pt:Point)-[]-(ft:Full_Text)-[]-(cat:Category)
         OPTIONAL MATCH (p)-[r]-(ft2:Full_Text)
         OPTIONAL MATCH (pt)-[r2]-(spt:Sub_Point)-[]-(ft3:Full_Text)
-        RETURN d, ar,p,pt,spt,ft,cat, r2, r, ft2, ft3 limit 1500
+        RETURN d, ar,p,pt,spt,ft,cat, r2, r, ft2, ft3 
         """
 
 search_by_article = """
@@ -35,7 +35,7 @@ initializing_database = """
         MATCH (n)
         DETACH DELETE n
         """
-CREATE_dora_record_file = """
+create_dora_record_file = """
         CREATE (n:Record_File)
         SET n += {{ {properties}, ctInsert: datetime() }} 
         RETURN n
@@ -217,7 +217,7 @@ false_spt_fulltext = """
         DETACH DELETE spt
         """
 
-complete_extraction = """
+complete_article_extraction = """
         MATCH (art:Article)        
         call { WITH art
         MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) //-[:STIPULATION]-(st:Stipulation)
