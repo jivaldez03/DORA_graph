@@ -1,15 +1,14 @@
 # DORA
-### The Digital Operational Resilience Act, or DORA, is a European Union (EU) regulation that creates a binding, 
-### comprehensive information and communication technology (ICT) risk management framework for the EU financial sector.
+### The Digital Operational Resilience Act, or DORA, is a European Union (EU) regulation that creates a binding, comprehensive information and communication technology (ICT) risk management framework for the EU financial sector.
 
-## Required Tools:  Docker and Python 3.10+
+# Required Tools:  Docker and Python 3.10+
 
-# INSTALL AND LOAD XLSX FILE
-## Python 3.10
-### prepare a new environments for python (root: nist_Grap directory):
-### python3 -m venv venv
-### source venv/bin/activate
-### pip3 install -r requirements.txt
+## INSTALL AND LOAD XLSX FILE
+### Python 3.10
+#### prepare a new environments for python (root: nist_Grap directory):
+#### python3 -m venv venv
+#### source venv/bin/activate
+#### pip3 install -r requirements.txt
 
 ## Docker
 ### ------- please change "your-user" label with a real value
