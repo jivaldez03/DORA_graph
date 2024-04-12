@@ -2,7 +2,7 @@ from app.general_functions.common import _get_datetime, _get_sdatetime
 from app.general_functions import pandas_fn as pd_fns
 from app.db import common_dbfunc as dbexec
 
-from app.db.crud.DORA_load import doras_file
+from app.db.crud import doras_file
 from app.model import record_file as model_dora
 from app.db.database import driver_forneo4j
 
@@ -105,26 +105,25 @@ def adding_related_to_Point():
     query = doras_file.related_to_Point
     dbexec.execute_write_query(targetdb, query)
 
-def cleaning_false_paragraph():
-    query = doras_file.false_par_fulltext
+def cleaning_false_sub_point():
+    query = doras_file.false_spt_fulltext
     dbexec.execute_write_query(targetdb, query)
 
 def cleaning_false_point():    
     query = doras_file.false_pt_fulltext
     dbexec.execute_write_query(targetdb, query)
 
-def cleaning_false_sub_point():
-    query = doras_file.false_spt_fulltext
+def cleaning_false_paragraph():
+    query = doras_file.false_par_fulltext
     dbexec.execute_write_query(targetdb, query)
-
 
 def cleaning_database():
     query = doras_file.record_file_delete
     dbexec.execute_write_query(targetdb, query)
 
-    cleaning_false_paragraph()
-    cleaning_false_point()
     cleaning_false_sub_point()
+    cleaning_false_point()
+    cleaning_false_paragraph()
     
 def initializing_database():
     query = doras_file.initializing_database
