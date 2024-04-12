@@ -15,7 +15,6 @@
 ### ------- please change "your-user" label with a real value
 1. 
 sudo docker run -d --publish=7474:7474 --publish=7687:7687 --env=NEO4J_AUTH=none --volume=/home/jiduma/dockerback/dock_DORA/data:/data neo4j
-sudo docker run -d --publish=7474:7474 --publish=7687:7687 --env=NEO4J_AUTH=none --volume=/home/jiduma/dockerback/dock_DORA/data:/data neo4j
 
 <ignore
 sudo docker run -d --publish=7475:7474 --publish=7688:7687 --env=NEO4J_AUTH=none \
@@ -39,7 +38,7 @@ docker run \
     -e NEO4JLABS_PLUGINS=\[\"apoc\"\] \
     neo4j:4.0
 
->
+<ignore>
 
 ## Loading DORA's file
 ### To load file into docker execute: 
@@ -56,33 +55,45 @@ call db.schema.visualization()
 ![schema visualization](DORA_schema.png)
 
 
-## Gloabal View
+## Global View
+
+### Getting a partial graph example
+        MATCH (d:Domain)-[]-(ar:Article)-[]-(p:Paragraph)-[]-(pt:Point)-[]-(ft:Full_Text)-[]-(cat:Category)
+        OPTIONAL MATCH (p)-[r]-(ft2:Full_Text)
+        OPTIONAL MATCH (pt)-[r2]-(spt:Sub_Point)-[]-(ft3:Full_Text)
+        RETURN d, ar, p, pt, spt, ft, cat, r2, r, ft2, ft3 
 
 ![Global View](complete_graph.png)
 
 
-### getting_articles
+### Exploring specific article
 
+        MATCH (ar:Article {ID:28}) // changing the ID code for the article ID that you want to explore
+        OPTIONAL MATCH (ar)-[:PARAGRAPH]->(p:Paragraph)        
+        OPTIONAL MATCH (p)-[:POINT]->(pt:Point)
+        OPTIONAL MATCH (pt)-[:SUB_POINT]->(spt:Sub_Point)
+        OPTIONAL MATCH (p)-[:FULL_TEXT]->(ft:Full_Text)
+        OPTIONAL MATCH (pt)-[:FULL_TEXT]->(ftp:Full_Text)
+        OPTIONAL MATCH (spt)-[:FULL_TEXT]->(fts:Full_Text)
+        RETURN ar, p, pt, spt, ft, ftp, fts
+
+![Articles View](articles_graph.png)
+
+
+
+### Getting a complete sequencial articles list
         MATCH (art:Article)        
         call { WITH art
-        MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) //-[:STIPULATION]-(st:Stipulation)
-        RETURN p.par_ID as par, '' as point, '' as subpoint,  ft.full_text as ft
+        MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[rf:FULL_TEXT]->(ft:Full_Text) 
+        RETURN p.ID as par, '' as point, '' as subpoint,  ft.full_text as ft
         union all
         WITH art
         MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[:POINT]->(pt:Point)-[rf2:FULL_TEXT]->(ft:Full_Text)
-        RETURN p.par_ID as par, pt.point as point, '' as subpoint,  ft.full_text as ft
+        RETURN p.ID as par, pt.ID as point, '' as subpoint,  ft.full_text as ft
         union all
         WITH art
         MATCH (art)-[:PARAGRAPH]->(p:Paragraph)-[:POINT]->(pt:Point)-[:SUB_POINT]->(spt:Sub_Point)-[:FULL_TEXT]->(ft:Full_Text)
-        RETURN p.par_ID as par, pt.point as point, spt.sub_point as subpoint,  ft.full_text as ft
+        RETURN p.ID as par, pt.ID as point, spt.ID as subpoint,  ft.full_text as ft
         }
-        RETURN art.ID as article, par, point, subpoint,  ft
-        order by article, par, point, subpoint
-
-### searching by article
-        MATCH (ar:Article {ID:28})
-        OPTIONAL MATCH (ar)-[]-(p:Paragraph)
-        OPTIONAL MATCH (p)-[]-(pt:Point)
-        OPTIONAL MATCH (pt)-[]-(spt:Sub_Point)
-        OPTIONAL MATCH (spt)-[]-(ft:Full_Text)
-        RETURN ar, p,pt,spt, ft
+        RETURN art.ID as article, par as paragraph, point, subpoint,  ft
+        order by article, paragraph, point, subpoint
