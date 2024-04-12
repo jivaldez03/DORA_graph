@@ -1,5 +1,6 @@
 # DORA
-###The Digital Operational Resilience Act, or DORA, is a European Union (EU) regulation that creates a binding, comprehensive information and communication technology ###(ICT) risk management framework for the EU financial sector.
+### The Digital Operational Resilience Act, or DORA, is a European Union (EU) regulation that creates a binding, 
+### comprehensive information and communication technology (ICT) risk management framework for the EU financial sector.
 
 ## Required Tools:  Docker and Python 3.10+
 
