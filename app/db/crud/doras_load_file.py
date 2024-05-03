@@ -32,8 +32,10 @@ create_dora_record_file = """
 domain_cat_other = """
         // COLLECT VALUES FOR CENTRAL (CATALOG) NODES
         MATCH (n:Record_File)
-        WITH COLLECT(DISTINCT n.category) as lcategory, COLLECT(DISTINCT n.domain) as ldomain
-                , COLLECT (DISTINCT n.responsible) as lresp, COLLECT (DISTINCT n.stipulation) as lstip
+        WITH COLLECT(DISTINCT n.category) as lcategory
+                , COLLECT(DISTINCT [n.domain, n.chapter]) as ldomain
+                , COLLECT (DISTINCT n.responsible) as lresp
+                , COLLECT (DISTINCT n.stipulation) as lstip
         // CATEGORIES  vs Record_File
         UNWIND lcategory as category
         MERGE (so:Category {name:category})
@@ -44,7 +46,7 @@ domain_cat_other = """
         // domain  vs Record_File
         WITH DISTINCT ldomain, lresp, lstip
         UNWIND ldomain as domain
-        MERGE (dm:Domain {name:domain})
+        MERGE (dm:Domain {name:domain[0], chapter:domain[1]})
         WITH lresp, lstip
         MATCH (n:Record_File)
         MATCH (dm:Domain) where dm.name = n.domain
@@ -67,15 +69,18 @@ domain_cat_other = """
         MERGE (st)-[:STIPULATION]->(n)
         """
 
-articles = """       
+articles = """
+        // articles
         MATCH (n:Record_File)
-        WITH DISTINCT n.article as article, n.article_heading as article_heading
+        WITH DISTINCT n.article as article, n.article_heading as article_heading, n.section as section
         MERGE (ar:Article {name:article_heading, ID: article})
+        set ar.section = toInteger(section)
         WITH ar
         MATCH (n:Record_File)
         MATCH (ar:Article) where ar.ID = n.article
         MERGE (ar)<-[:RECORD_FILE]-(n)
         WITH ar, n
+        // article-domain (chapter)
         MATCH (dm:Domain)-[:DOMAIN]->(n)
         MERGE (dm)-[:DOMAIN]->(ar)        
         """
@@ -87,8 +92,6 @@ paragraph = """
         MERGE (p)<-[:RECORD_FILE]-(n)
         MERGE (p)<-[:PARAGRAPH]-(ar)
         """
-
-
 
 point = """
         //paragraph-point

@@ -1,14 +1,9 @@
-from app.general_functions.common import _get_datetime, _get_sdatetime
+from app.db.database import targetdb
 from app.general_functions import pandas_fn as pd_fns
-from app.db import common_dbfunc as dbexec
+import app.clean_load as cl
 
-from app.db.crud import doras_file
-from app.model import record_file as model_dora
-from app.db.database import driver_forneo4j
 
-import re
-from json import loads, dumps 
-
+"""
 def sendingDB_recordFile(df):
     global targetdb
 
@@ -128,23 +123,19 @@ def cleaning_database():
 def initializing_database():
     query = doras_file.initializing_database
     dbexec.execute_write_query(targetdb, query)
+"""
 
 # MAIN SECTION
-port = input (f"port to connect Neo4j (7687): ")
-if not port:
-    port = '7687'
 
-targetdb = driver_forneo4j(port)
+cl.initializing_database()
 
-initializing_database()
-
-pdxls = pd_fns._read_file('files/DORA_Requirements_v2.xlsx') 
+pdxls = pd_fns._read_file('./files/DORA_Requirements.xlsx') 
 
 for gia, sheet in enumerate(list(pdxls.keys())[0:1]):    
     df = pdxls[sheet]
     cols = df.columns
     df = pd_fns._df_renamecolumns(df
-                                , { 'Category' : 'Category'
+                                , { 'People, Process, Technology' : 'Category'
                                     , 'Chapter Heading': 'Domain'
                                     , 'Article Heading' : 'Article_Heading'   
                                     , 'Section Heading' : 'Section_Heading'    
@@ -158,24 +149,23 @@ for gia, sheet in enumerate(list(pdxls.keys())[0:1]):
     df = pd_fns._df_changetype(df, 'Chapter', 'int')
     df = pd_fns._df_changetype(df, 'Article', 'int')
 
-    df["Related_to"] = clean_related_to(list(df["Related_to"]))
+    df["Related_to"] = cl.cleaning_column_related_to(list(df["Related_to"]))
+    df["Stipulation"] = df["Stipulation"].str.capitalize()
     
-    sendingDB_recordFile(df)
+    cl.sendingDB_recordFile(df)
+    cl.adding_domain_cat_others()
+    cl.adding_articles()
+    cl.adding_paragraph()
+    cl.adding_point()
+    cl.adding_subpoint()
+    cl.adding_fulltext()
+    cl.adding_fulltext_paragraph()
+    cl.adding_fulltext_point()
+    cl.adding_related_to_Art()
+    cl.adding_related_to_Paragraph()
+    cl.adding_related_to_Point()
+    cl.cleaning_database()
 
-    adding_domain_cat_others()
-    adding_articles()
-    adding_paragraph()
-    adding_point()
-    adding_subpoint()
-    adding_fulltext()
-    adding_fulltext_paragraph()
-    adding_fulltext_point()
-    adding_related_to_Art()
-    adding_related_to_Paragraph()
-    adding_related_to_Point()
-    cleaning_database()
 
-#adding_relatedcontrols()
-#adding_rootnodes()
 
 targetdb.close()
