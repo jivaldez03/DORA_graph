@@ -29,7 +29,7 @@ def cleaning_database():
     cleaning_false_paragraph()
 
 def cleaning_column_related_to(l:list):
-    # converting: "Article 6(8)]" -> ['6;8;']
+    # converting: "Article 6(8)]" -> ['6;8;'] -> ' Article 6, Paragraph 8
     # converting: "Article 11(1); Article 11(3)" -> ['11;1;', '11;3;']
     # converting: "Article 30(2) point (i)" -> ['30;2;i;']
     newlist = []
@@ -43,7 +43,7 @@ def cleaning_column_related_to(l:list):
             for pos,el in enumerate(element2):
                 #if el.__contains__('Chapter'):
                 #    continue
-                if el.count(';') == 0 or el.__contains__('Chapter'):
+                if el.count(';') == 0: # or el.__contains__('Chapter'):
                     el += ';;'
                 elif el.count(';') == 1:
                     el += ';'
@@ -109,8 +109,13 @@ def adding_fulltext_point():
     query = doras_load_file.point_fulltext
     dbexec.execute_write_query(targetdb, query)
 
-def adding_related_to_Art():
+def adding_related_to_Chapter():
     print('Adding Related to...', end="")
+    query = doras_load_file.related_to_Chapter
+    dbexec.execute_write_query(targetdb, query)
+
+def adding_related_to_Art():
+    print('......', end="")
     query = doras_load_file.related_to_Article
     dbexec.execute_write_query(targetdb, query)
 

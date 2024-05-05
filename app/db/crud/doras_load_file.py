@@ -145,13 +145,25 @@ record_file_delete = """
         DETACH DELETE n
         """
 
+
+related_to_Chapter = """
+        MATCH (ft:Full_Text) 
+        where not ft.related_to is null
+        WITH ft, size(ft.related_to) as eles
+        UNWIND ft.related_to as relationt
+        WITH ft, relationt, split(relationt,';') as relationto
+        where relationto[0] starts with 'Chapter'
+        MATCH (do:Domain {chapter: toInteger(trim(replace(relationto[0],'Chapter','')))})
+        MERGE (do)-[:RELATED_TO]->(ft)
+        """
+
 related_to_Article = """
         MATCH (ft:Full_Text) 
         where not ft.related_to is null
         WITH ft, size(ft.related_to) as eles
         UNWIND ft.related_to as relationt
         WITH ft, relationt, split(relationt,';') as relationto
-        where  relationto[1] = ""  and relationto[2]= "" // and pointto = 'A'
+        where not relationto[0] starts with 'Chapter' and relationto[1] = ""  and relationto[2]= "" // and pointto = 'A'
         MATCH (ar:Article {ID: toInteger(relationto[0])})
         MERGE (ar)-[:RELATED_TO]->(ft)
         """
@@ -162,7 +174,7 @@ related_to_Paragraph = """
         WITH ft, size(ft.related_to) as eles
         UNWIND ft.related_to as relationt
         WITH ft, relationt, split(relationt,';') as relationto
-        where relationto[1] <> ""  and relationto[2] = "" // and pointto = 'P'
+        where not relationto[0] starts with 'Chapter' and relationto[1] <> ""  and relationto[2] = ""
         MATCH (ar:Article {ID: toInteger(relationto[0])})-[:PARAGRAPH]->(p:Paragraph {par_ID:toInteger(relationto[1])})
         MERGE (p)-[:RELATED_TO]->(ft)
         """
@@ -173,7 +185,7 @@ related_to_Point = """
         WITH ft, size(ft.related_to) as eles
         UNWIND ft.related_to as relationt
         WITH ft, relationt, split(relationt,';') as relationto
-        where relationto[1] <> ""  and relationto[2] <> "" // and pointto = 'T'
+        where not relationto[0] starts with 'Chapter' and relationto[1] <> ""  and relationto[2] <> "" 
         MATCH (ar:Article {ID: toInteger(relationto[0])})-[:PARAGRAPH]->(p:Paragraph {par_ID:toInteger(relationto[1])})-[:POINT]-(pt:Point {point:relationto[2]})
         MERGE (pt)-[:RELATED_TO]->(ft)
         """
