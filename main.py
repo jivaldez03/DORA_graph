@@ -1,4 +1,4 @@
-from app.db.database import targetdb
+from app.db.database import driver_close
 from app.general_functions import pandas_fn as pd_fns
 import app.clean_and_load as cl
 
@@ -44,4 +44,4 @@ for gia, sheet in enumerate(list(pdxls.keys())[0:1]):
     cl.adding_related_to_Point()
     cl.cleaning_database()
 
-targetdb.close()
+driver_close()

@@ -10,6 +10,10 @@ def driver_forneo4j(port):
     return driver_neo4j
 
 
+def driver_close():
+    targetdb.close()
+
+
 port = input (f"port to connect Neo4j (7687): ")
 if not port:
     port = '7687'
