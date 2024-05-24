@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
+from neo4j import GraphDatabase
 
-# for all neo4j database
 class DBSettings_any(BaseSettings):
     NEO4J_PROTOCOL: str = "neo4j"
     NEO4J_HOST: str = "localhost"
@@ -16,10 +16,21 @@ class DBSettings_any(BaseSettings):
         return f"{self.NEO4J_PROTOCOL}://{self.NEO4J_HOST}:{port}"
 
 
-class Settings_any(BaseSettings):
-    APP_NAME: str = "json -> neo4j"
+class Settings_any():
+    APP_NAME: str = "DORA -> neo4j"
     API_V1_PATH: str = ""
     db: DBSettings_any = DBSettings_any()
+
+    def open_driver(self, port):
+        driver_neo4j = GraphDatabase.driver(
+            settings_any.db.get_database_uri_port(port)
+            #, auth=(settings_any.db.NEO4J_USERNAME, settings_any.db.NEO4J_PASSWORD)        
+        )
+        self.connection = driver_neo4j
+        return driver_neo4j
+    
+    def close_driver(self):        
+        self.connection.close()
 
 settings_any = Settings_any()
 

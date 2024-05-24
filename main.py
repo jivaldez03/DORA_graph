@@ -1,8 +1,10 @@
-from app.db.database import driver_close
+from app.db.database import driver_open_session, driver_close
 from app.general_functions import pandas_fn as pd_fns
 import app.clean_and_load as cl
 
 # MAIN SECTION
+
+driver_open_session()
 
 cl.initializing_database()
 
