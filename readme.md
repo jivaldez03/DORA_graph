@@ -15,6 +15,23 @@
 1. 
 sudo docker run -d --publish=7474:7474 --publish=7687:7687 --env=NEO4J_AUTH=none --volume=/home/your-user/dockerback/dock_DORA/data:/data neo4j
 
+1.a Como subir un dump al docker de neo4j
+sudo docker run -d --publish=7474:7474 --publish=7687:7687 --env=NEO4J_AUTH=none --volume=/home/your-user/dockerback/dock_DORA/data:/data -v neo4j_import:/import -v $(pwd):/backup \neo4j
+
+sudo docker exec neo4j-container neo4j stop
+
+sudo docker start e83cbc
+sudo docker exec e83cbc neo4j start
+
+
+docker exec neo4j-container neo4j-admin load --from=/backup/file_0001.dmp --database=neo4j --force
+docker exec neo4j-container neo4j-admin load --from-path=/backup/neo4j_movies.dmp neo4j
+
+sudo docker exec e83cbc neo4j-admin database load --from-path=/backup/neo4j_movies.dmp --verbose --overwrite-destination=true neo4j
+
+-v neo4j_import:/import \
+-v $(pwd):/backup \
+
 
 ## Loading DORA's file
 ### To load file into docker execute: 
